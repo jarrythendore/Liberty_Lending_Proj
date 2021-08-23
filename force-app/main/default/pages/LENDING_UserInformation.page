@@ -1,0 +1,262 @@
+<apex:page controller="LENDING_MainController" showHeader="true" standardStylesheets="false" sidebar="false" docType="html-5.0"
+  action="{!build}" lightningStylesheets="true">
+  <apex:slds />
+
+  <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+    crossorigin="anonymous"></script>
+
+  <script>
+    function validateRecordDate() {
+
+      // get closes data and started date by input element class.
+      var createdDate = document.getElementsByClassName("createdDateClassId")[0].value;
+      var closedDate = document.getElementsByClassName('closeddDateClassId')[0].value;
+
+      validatedate(createdDate);
+      validatedate(closedDate);
+
+      var date1 = new Date(createdDate);
+      var date2 = new Date(closedDate);
+
+      var Difference_In_Time = date2.getTime() - date1.getTime();
+      var Difference_In_Days = Difference_In_Time / (1000 * 3600 * 24);
+
+
+      if (Difference_In_Days < 31) {
+        alert('close date should greater than started date and the difference should be greater than 31 days.');
+        buttonsEnabled(false);
+        return false;
+      }
+
+      return true;
+    }
+
+    function buttonsEnabled(enable) {
+      var $buttons = jQuery('.goButtonClassId'); // find all buttons in the page
+      if (enable === false) {
+        $buttons.toggleClass('btnDisabled', true).attr('disabled', 'disabled');
+      } else {
+        $buttons.toggleClass('btnDisabled', false).attr('disabled', null);
+      }
+    }
+
+    function validatedate(dateString) {
+      if (dateString == null || dateString == '') {
+        // leave for SF slds style validate.
+        return true;
+      }
+
+      //build regex format for validate pattern 
+      let dateformat = /^(0?[1-9]|1[0-2])[\/](0?[1-9]|[1-2][0-9]|3[01])[\/]\d{4}$/;
+
+      // Match the date format through regular expression      
+      if (dateString.match(dateformat)) {
+        let operator = dateString.split('/');
+
+        // Extract the string into month, date and year      
+        let datepart = [];
+        if (operator.length > 1) {
+          pdatepart = dateString.split('/');
+        }
+        let month = parseInt(datepart[0]);
+        let day = parseInt(datepart[1]);
+        let year = parseInt(datepart[2]);
+
+        // Create list of days of a month      
+        let ListofDays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+        if (month == 1 || month > 2) {
+          if (day > ListofDays[month - 1]) {
+            ///This check is for Confirming that the date is not out of its range      
+            return false;
+          }
+        } else if (month == 2) {
+          let leapYear = false;
+          if ((!(year % 4) && year % 100) || !(year % 400)) {
+            leapYear = true;
+          }
+          if ((leapYear == false) && (day >= 29)) {
+            return false;
+          } else
+            if ((leapYear == true) && (day > 29)) {
+              alert('Invalid date format!');
+              buttonsEnabled(false);
+              return false;
+            }
+        }
+      } else {
+        alert("Invalid date format!");
+        buttonsEnabled(false);
+        return false;
+      }
+      return true;
+    }
+
+
+  </script>
+
+
+  <apex:form>
+    <apex:messages />
+    <div class="slds-card">
+      <article class="slds-card">
+
+        <div class="slds-card__header slds-grid">
+          <header class="slds-media slds-media_center slds-has-flexi-truncate">
+            <div class="slds-media__figure">
+              <span class="slds-icon_container slds-icon-standard-user" title="user">
+                <svg class="slds-icon slds-icon_small" aria-hidden="true">
+                  <use xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/standard-sprite/svg/symbols.svg#user')}"></use>
+                </svg>
+                <span class="slds-assistive-text">User</span>
+              </span>
+            </div>
+            <div class="slds-media__body">
+              <h2 class="slds-card__header-title">
+                <a href="javascript:void(0);" class="slds-card__header-link slds-truncate" title="Users">
+                  <span>User Information</span>
+                </a>
+              </h2>
+            </div>
+          </header>
+        </div>
+      </article>
+
+      <div class="slds-card__header slds-grid">
+        <header class="slds-media slds-media_center slds-has-flexi-truncate">
+          <div class="slds-media__figure">
+            <span class="slds-icon_container slds-icon-standard-search" title="search">
+              <svg class="slds-icon slds-icon_small" aria-hidden="true">
+                <use xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/standard-sprite/svg/symbols.svg#search')}"></use>
+              </svg>
+              <span class="slds-assistive-text">Search</span>
+            </span>
+          </div>
+          <div class="slds-media__body">
+            <h2 class="slds-card__header-title">
+              <div class="slds-card__body slds-card__body_inner">
+                <apex:inputText id="createdDate" styleClass="createdDateClassId" value="{!recordCreatedDate}" html-placeholder="Record Created Date (MM/DD/YYYY)"
+                  required="true" />
+                <apex:inputText id="closeddDate" styleClass="closeddDateClassId" value="{!recordClosedDate}" html-placeholder="Record Closed Date (MM/DD/YYYY)"
+                  required="true" />
+                <apex:commandButton value="Go!" styleClass="goButtonClassId" action="{!runSearch}" rerender="userInfoListId" status="status"
+                  onclick="validateRecordDate();" />
+              </div>
+            </h2>
+          </div>
+        </header>
+      </div>
+
+      <!--
+      <article class="slds-card">
+        <div class="slds-card__body slds-card__body_inner">
+          <b>Search Lead/Opportunity by reccord created closed date:</b>
+        </div>
+        
+        <div class="slds-media__figure">
+          <span class="slds-icon_container slds-icon-standard-user" title="search">
+            <svg class="slds-icon slds-icon_small" aria-hidden="true">
+              <use xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/standard-sprite/svg/symbols.svg#search')}"></use>
+            </svg>
+            <span class="slds-assistive-text">User</span>
+          </span>
+        </div>
+        <div class="slds-card__body slds-card__body_inner">
+          <apex:inputText id="createdDate" value="{!recordCreatedDate}" />
+          <apex:commandButton value="Go!" action="{!runSearch}" rerender="userInfoListId" status="status" />
+        </div>
+        <apex:actionStatus id="status" startText="requesting..." />
+        <footer class="slds-card__footer">
+
+        </footer>
+      </article>
+    -->
+
+      <apex:outputpanel id="userInfoListId">
+        <section class="slds-media__body">
+          <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+            <thead>
+              <tr class="slds-line-height_reset">
+                <th class="" scope="col">
+                  <div class="slds-truncate" title="User Name">Owner</div>
+                </th>
+
+                <th class="" scope="col">
+                  <apex:actionRegion>
+                    <apex:commandLink action="{!sortTableCol}" rerender="userInfoListId">
+                      <div class="slds-truncate" title="Total Leads">Total Leads</div>
+                    </apex:commandLink>
+                  </apex:actionRegion>
+                </th>
+
+                <th class="" scope="col">
+                  <div class="slds-truncate" title="Total Opps">Total Opps</div>
+                </th>
+
+                <th class="" scope="col">
+                  <div class="slds-truncate" title="Conversion Rate">Conversion Rate</div>
+                </th>
+
+                <th class="" scope="col">
+                  <div class="slds-truncate" title="Max Created Date (Opp)">Max Created Date (Opp)</div>
+                </th>
+
+                <th class="" scope="col">
+                  <div class="slds-truncate" title="Total Value">Total Val (Opp)</div>
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <apex:repeat value="{!userWrapperList}" var="userWrap">
+                <tr class="slds-hint-parent">
+                  <td data-label="User Name">
+                    <div class="slds-truncate" title="Cloudhub">
+                      {!userWrap.u.Name}
+                    </div>
+                  </td>
+
+                  <td data-label="Total Leads">
+                    <div class="slds-truncate" title="Cloudhub">
+                      {!userWrap.leadWrapperList.SIZE}
+                    </div>
+                  </td>
+
+                  <td data-label="Total Opps">
+                    <div class="slds-truncate" title="Cloudhub">
+                      {!userWrap.oppWrapperList.SIZE}
+                    </div>
+                  </td>
+
+                  <td data-label="Conv Rate">
+                    <div class="slds-truncate" title="Cloudhub">
+                      {!userWrap.conversionRate}%
+                    </div>
+                  </td>
+
+                  <td data-label="Max Created Date">
+                    <div class="slds-truncate" title="Cloudhub">
+                      {!userWrap.maxCreatedDate}
+                    </div>
+                  </td>
+                  <td data-label="Total Amount">
+                    <div class="slds-truncate" title="Cloudhub">
+                      ${!userWrap.totalAmount}
+                    </div>
+                  </td>
+
+
+                </tr>
+              </apex:repeat>
+            </tbody>
+
+          </table>
+        </section>
+      </apex:outputpanel>
+
+
+    </div>
+  </apex:form>
+
+  </html>
+</apex:page>
